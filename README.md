@@ -69,7 +69,7 @@ Use the checkboxes for bulk actions: move to a category, set the egg mark, mark 
   - **Bulk enquiries** come from the "Bulk & party orders" form.
 - **Customers:** everyone who has registered.
 - **Shop settings:**
-  - Logo upload (a transparent PNG works best)
+  - Logo: the apron logo is built in (`public/brand/`). Upload a transparent PNG to replace it.
   - Home page tagline, headline and text
   - WhatsApp number. Setting it turns on the floating "Order on WhatsApp" button and WhatsApp links.
   - Phone, email, address and order hours

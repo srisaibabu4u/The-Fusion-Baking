@@ -114,7 +114,7 @@ export function SettingsPanel() {
           <button type="button" className="btn btn-ghost" onClick={() => logoRef.current.click()} disabled={busy}>{settings?.logo ? 'Replace logo' : 'Upload logo'}</button>
           {settings?.logo && <button type="button" className="link-btn" onClick={removeLogo} disabled={busy}>Remove</button>}
         </div>
-        <p className="hint">A PNG with a transparent background looks best. It appears beside the shop name in the header.</p>
+        <p className="hint">The apron logo is set by default. To change it, upload a PNG with a transparent background. It appears beside the shop name in the header.</p>
         {GROUPS.map(([title, fields]) => (
           <div key={title}>
             <h2>{title}</h2>

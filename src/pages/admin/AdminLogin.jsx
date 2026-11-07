@@ -24,7 +24,8 @@ export default function AdminLogin() {
   return (
     <div className="admin-login">
       <form className="admin-login-card" onSubmit={submit}>
-        {settings?.logo && <img className="admin-login-logo" src={imageUrl(settings.logo)} alt="" />}
+        <img className="admin-login-logo" alt=""
+          src={!settings?.logo || settings.logo === '/brand/logo-apron.png' ? '/brand/logo-badge.png' : imageUrl(settings.logo)} />
         <h1>{settings?.shopName || 'The Fusion Baking'}</h1>
         <p className="muted">Admin sign in</p>
         <PasswordField id="admin-pass" label="Admin password" value={password} onChange={setPassword} autoFocus />

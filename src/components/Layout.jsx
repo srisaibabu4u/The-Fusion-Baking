@@ -41,8 +41,12 @@ export default function Layout() {
             <NavLink to={customer ? '/account' : '/account/login'} className="hide-sm">
               {customer ? customer.name.split(' ')[0] : 'Sign in'}
             </NavLink>
-            <NavLink to="/cart" className="basket-link">
-              Basket{cartCount > 0 && <span className="basket-count" aria-label={`${cartCount} items`}>{cartCount}</span>}
+            <NavLink to="/cart" className="basket-link" aria-label={`Basket${cartCount ? `, ${cartCount} items` : ''}`}>
+              <svg className="bag-icon" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 8h14l-1.2 12.2a1 1 0 0 1-1 .8H7.2a1 1 0 0 1-1-.8z M9 8V6.5a3 3 0 0 1 6 0V8" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+              </svg>
+              <span className="basket-text">Basket</span>
+              {cartCount > 0 && <span className="basket-count" aria-hidden="true">{cartCount}</span>}
             </NavLink>
             <button className="menu-btn" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-controls="mobile-menu">Menu</button>
           </nav>
@@ -62,11 +66,14 @@ export default function Layout() {
       <footer className="footer">
         <Signature />
         <div className="footer-inner">
-          <div>
+          <div className="footer-brand">
+            <img src="/brand/logo-badge.png" alt="" width="84" height="84" loading="lazy" />
+            <div>
             <p>{settings?.tagline}</p>
             {settings?.instagram && (
               <p><a href={settings.instagram} target="_blank" rel="noreferrer">Instagram @{settings.instagram.replace(/\/+$/, '').split('/').pop().split('?')[0]}</a></p>
             )}
+            </div>
           </div>
           <div>
             <p className="footer-head">Ordering</p>

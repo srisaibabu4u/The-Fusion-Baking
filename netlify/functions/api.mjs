@@ -40,7 +40,7 @@ export const DEFAULT_SETTINGS = {
   deliveryNote: 'Freshly baked on order. We confirm every order on WhatsApp or by phone, and you pay on delivery or collection.',
   instagram: 'https://www.instagram.com/thefusionbaking',
   fssai: '',
-  logo: '',
+  logo: '/brand/logo-apron.png',
 }
 
 // ---------- helpers ----------
@@ -346,7 +346,7 @@ async function router(req) {
       next.logo = ''
     } else return fail(405, 'Use POST or DELETE.')
     await settingsStore().setJSON('site', next)
-    if (old && old !== next.logo) await images().delete(old).catch(() => {})
+    if (old !== next.logo) await dropImage(old)
     return json(next)
   }
 

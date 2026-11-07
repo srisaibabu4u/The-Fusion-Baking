@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, Navigate, NavLink, Route, Routes, useNavigate } from 'react-router-dom'
-import { api, tokens } from '../../lib/api.js'
+import { api, imageUrl, tokens } from '../../lib/api.js'
 import { useShop } from '../../lib/store.jsx'
 import ProductsPanel from './ProductsPanel.jsx'
 import UploadPanel from './UploadPanel.jsx'
@@ -37,7 +37,10 @@ export default function Admin() {
   return (
     <div className="admin">
       <aside className="admin-side">
-        <Link to="/" className="admin-brand">{settings?.shopName || 'The Fusion Baking'}</Link>
+        <Link to="/" className="admin-brand">
+          {settings?.logo && <img src={imageUrl(settings.logo)} alt="" />}
+          <span>{settings?.shopName || 'The Fusion Baking'}</span>
+        </Link>
         <nav aria-label="Admin">
           <NavLink end to="/admin">Products</NavLink>
           <NavLink to="/admin/upload">Upload folder</NavLink>
