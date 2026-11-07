@@ -435,6 +435,16 @@ code { background: var(--linen); padding: .05rem .35rem; border-radius: 4px; fon
   .wa-float { padding: .8rem; }
   .signature { gap: .6rem; }
 }
+@media (max-width: 420px) {
+  .masthead-inner { gap: .5rem; }
+  .nav { gap: .75rem; }
+  .wordmark-name { font-size: 1.8rem; }
+  .wordmark-logo { height: 34px; }
+  .menu-btn { padding: .25rem .7rem; }
+  .basket-count { min-width: 1.25rem; height: 1.25rem; }
+  .admin-table th, .admin-table td { padding: .5rem .55rem; }
+  .item-cell { gap: .55rem; }
+}
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }

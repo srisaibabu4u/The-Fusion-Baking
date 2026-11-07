@@ -120,7 +120,7 @@ export default function ProductsPanel({ products, reload }) {
             <thead>
               <tr>
                 <th><input type="checkbox" checked={allSelected} onChange={() => setSelected(allSelected ? new Set() : new Set(list.map((p) => p.id)))} aria-label="Select all" /></th>
-                <th>Item</th><th>Category</th><th>Price</th><th>Egg</th><th>In stock</th><th>Favourite</th><th>Visible</th>
+                <th>Item</th><th className="hide-sm">Category</th><th>Price</th><th className="hide-sm">Egg</th><th>In stock</th><th className="hide-sm">Favourite</th><th className="hide-sm">Visible</th>
               </tr>
             </thead>
             <tbody>
@@ -133,12 +133,12 @@ export default function ProductsPanel({ products, reload }) {
                       <span>{p.name}</span>
                     </button>
                   </td>
-                  <td>{p.category}</td>
+                  <td className="hide-sm">{p.category}</td>
                   <td className="price-cell">{priceCell(p)}</td>
-                  <td><DietMarks diet={p.diet} /></td>
+                  <td className="hide-sm"><DietMarks diet={p.diet} /></td>
                   <td><input type="checkbox" checked={p.available !== false} onChange={(e) => quick(p, { available: e.target.checked })} aria-label="In stock" /></td>
-                  <td><input type="checkbox" checked={!!p.featured} onChange={(e) => quick(p, { featured: e.target.checked })} aria-label="Favourite" /></td>
-                  <td><input type="checkbox" checked={!p.hidden} onChange={(e) => quick(p, { hidden: !e.target.checked })} aria-label="Visible" /></td>
+                  <td className="hide-sm"><input type="checkbox" checked={!!p.featured} onChange={(e) => quick(p, { featured: e.target.checked })} aria-label="Favourite" /></td>
+                  <td className="hide-sm"><input type="checkbox" checked={!p.hidden} onChange={(e) => quick(p, { hidden: !e.target.checked })} aria-label="Visible" /></td>
                 </tr>
               ))}
             </tbody>
