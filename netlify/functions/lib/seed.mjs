@@ -31,6 +31,16 @@ export const SEED_PRODUCTS = [
     description: 'A soft, buttery loaf crusted with crushed pistachios. Perfect sliced with an evening chai.',
   },
   {
+    name: 'Chocolate Marble Cake', category: 'Cakes', image: '/seed/chocolate-marble-cake.webp',
+    tagline: 'Swirled to perfection',
+    description: 'A soft vanilla and chocolate loaf, marbled through and baked in its own paper mould. Lovely with a glass of cold milk.',
+  },
+  {
+    name: 'Almond Loaf Cake', category: 'Cakes', image: '/seed/almond-loaf-cake.webp',
+    tagline: 'Nutty tea time treat',
+    description: 'A golden tea loaf topped with a generous layer of toasted sliced almonds.',
+  },
+  {
     name: 'Ragi Choco Biscuits', category: 'Biscuits', image: '/seed/ragi-choco-biscuits.webp',
     tagline: 'Healthy made simple', diet: 'eggless', nutritiousNote: 'Ragi & almond flour',
     description: 'Made with the nourishing power of ragi and almond flour, for a snack you’ll love every day.',

@@ -23,7 +23,7 @@ const { default: api } = await import('../netlify/functions/api.mjs')
 {
   const res = await api(new Request('http://local/api/products'))
   const first = await res.json()
-  if (first.length !== 11) throw new Error(`expected 11 starter items, got ${first.length}`)
+  if (first.length !== 13) throw new Error(`expected 13 starter items, got ${first.length}`)
   for (const p of first) {
     const del = await api(new Request(`http://local/api/products/${p.id}`, { method: 'DELETE', headers: { authorization: `Bearer ${(await (await api(new Request('http://local/api/auth/admin', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ password: process.env.ADMIN_PASSWORD }) }))).json()).token}` } }))
     if (del.status !== 200) throw new Error('delete failed')
@@ -138,11 +138,11 @@ assert.equal(r.status, 200)
 
 // Starter menu: added on demand, skips names that already exist, uses static photos
 r = await call('POST', '/admin/seed', { token: admin })
-assert.equal(r.data.added, 11)
+assert.equal(r.data.added, 13)
 r = await call('POST', '/admin/seed', { token: admin })
 assert.equal(r.data.added, 0, 'seeding twice adds nothing')
 r = await call('GET', '/products')
-assert.equal(r.data.length, 11)
+assert.equal(r.data.length, 13)
 assert.ok(r.data.every((p) => p.image.startsWith('/seed/')))
 assert.equal(r.data[0].name, 'Ragi Almond Biscuits')
 r = await call('DELETE', `/products/${r.data[0].id}`, { token: admin })

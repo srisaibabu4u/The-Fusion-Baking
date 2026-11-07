@@ -108,7 +108,7 @@ export default function ProductsPanel({ products, reload }) {
 
       {list.length === 0 ? (
         <div className="empty">
-          <p>No items yet. Upload a folder of photos and each photo becomes an item you can edit, or start from the starter menu of 11 bakes.</p>
+          <p>No items yet. Upload a folder of photos and each photo becomes an item you can edit, or start from the starter menu of 13 bakes.</p>
           <div className="actions center">
             <Link to="/admin/upload" className="btn btn-primary">Upload folder</Link>
             <button className="btn btn-ghost" onClick={loadStarter}>Load starter menu</button>

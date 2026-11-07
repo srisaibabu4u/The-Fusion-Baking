@@ -20,7 +20,7 @@ An online shop for a home bakery selling cakes, cookies, biscuits, muffins, brow
 
 ## Starter menu
 
-The shop comes with 11 items made from The Fusion Baking's own photos (`public/seed/`, defined in `netlify/functions/lib/seed.mjs`). They load automatically the first time the site runs with an empty catalogue. All prices start at 0 ("Price on request"), so set them in **Admin → Products**. Every name, description and photo can be edited. If you clear the catalogue, the starter menu doesn't come back unless you click **Load starter menu**.
+The shop comes with 13 items made from The Fusion Baking's own photos (`public/seed/`, defined in `netlify/functions/lib/seed.mjs`). They load automatically the first time the site runs with an empty catalogue. All prices start at 0 ("Price on request"), so set them in **Admin → Products**. Every name, description and photo can be edited. If you clear the catalogue, the starter menu doesn't come back unless you click **Load starter menu**.
 
 ## Using the admin area
 
