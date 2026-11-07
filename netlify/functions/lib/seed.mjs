@@ -1,6 +1,8 @@
 // Starter menu from The Fusion Baking's own photos (public/seed/*.webp).
 // Loaded automatically the first time the shop runs with an empty catalogue,
 // or on demand from Admin → Products → "Load starter menu".
+// New starter items (marked `since`) are added to existing shops on the next
+// deploy; anything the owner deleted is never brought back.
 // Prices start at 0 ("Price on request") — set them in the admin.
 
 const base = {
@@ -31,12 +33,12 @@ export const SEED_PRODUCTS = [
     description: 'A soft, buttery loaf crusted with crushed pistachios. Perfect sliced with an evening chai.',
   },
   {
-    name: 'Chocolate Marble Cake', category: 'Cakes', image: '/seed/chocolate-marble-cake.webp',
+    name: 'Chocolate Marble Cake', since: 2, category: 'Cakes', image: '/seed/chocolate-marble-cake.webp',
     tagline: 'Swirled to perfection',
     description: 'A soft vanilla and chocolate loaf, marbled through and baked in its own paper mould. Lovely with a glass of cold milk.',
   },
   {
-    name: 'Almond Loaf Cake', category: 'Cakes', image: '/seed/almond-loaf-cake.webp',
+    name: 'Almond Loaf Cake', since: 2, category: 'Cakes', image: '/seed/almond-loaf-cake.webp',
     tagline: 'Nutty tea time treat',
     description: 'A golden tea loaf topped with a generous layer of toasted sliced almonds.',
   },

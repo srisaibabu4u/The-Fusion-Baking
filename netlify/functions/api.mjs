@@ -160,11 +160,13 @@ async function deleteProduct(p) {
   await dropImage(p.image)
 }
 
-async function addSeedProducts() {
+async function addSeedProducts(only) {
   const existing = new Set((await listProducts()).map((p) => p.slug))
   let added = 0
   for (const [i, seed] of SEED_PRODUCTS.entries()) {
-    const p = cleanProduct(seed, { id: id(), createdAt: new Date(Date.now() - i * 60000).toISOString() })
+    const { since, ...data } = seed
+    const p = cleanProduct(data, { id: id(), createdAt: new Date(Date.now() - i * 60000).toISOString() })
+    if (only && !only.has(p.slug)) continue
     if (existing.has(p.slug)) continue
     p.image = seed.image
     await saveProduct(p)
@@ -173,14 +175,28 @@ async function addSeedProducts() {
   return added
 }
 
-// First run only: an empty catalogue gets the starter menu. After that the
-// admin is in charge, so deleting everything never brings it back.
-async function seedIfFirstRun() {
+const seedSlug = (s) => slugify(s.name)
+
+// Keeps the starter menu in step with the code:
+// - first run on an empty shop: add every starter item
+// - later deploys: add only starter items this shop has never been offered,
+//   so items the owner deleted never come back
+async function syncSeed() {
   const st = settingsStore()
-  if (await st.get('seed-state', { type: 'json' })) return
-  await st.setJSON('seed-state', { at: new Date().toISOString() })
-  const { blobs } = await catalog().list({ prefix: 'products/' })
-  if (!blobs.length) await addSeedProducts()
+  const state = await st.get('seed-state', { type: 'json' })
+  const all = SEED_PRODUCTS.map(seedSlug)
+  if (!state) {
+    const { blobs } = await catalog().list({ prefix: 'products/' })
+    if (!blobs.length) await addSeedProducts()
+    await st.setJSON('seed-state', { at: new Date().toISOString(), slugs: all })
+    return
+  }
+  // Shops seeded before slugs were tracked were offered the original items only
+  const offered = new Set(state.slugs || SEED_PRODUCTS.filter((s) => !s.since).map(seedSlug))
+  const fresh = all.filter((slug) => !offered.has(slug))
+  if (!fresh.length) return
+  await addSeedProducts(new Set(fresh))
+  await st.setJSON('seed-state', { at: new Date().toISOString(), slugs: all })
 }
 
 async function putImage(bytes, contentType) {
@@ -404,7 +420,7 @@ async function router(req) {
   // ---- products ----
   if (seg[0] === 'products') {
     if (seg.length === 1 && method === 'GET') {
-      await seedIfFirstRun()
+      await syncSeed()
       const all = await listProducts()
       return json(isAdmin(req) ? all : all.filter((p) => !p.hidden))
     }
@@ -450,8 +466,9 @@ async function router(req) {
 
   if (path === '/admin/seed' && method === 'POST') {
     if (!isAdmin(req)) return fail(401, 'Sign in as admin.')
-    await settingsStore().setJSON('seed-state', { at: new Date().toISOString() })
-    return json({ added: await addSeedProducts() })
+    const added = await addSeedProducts()
+    await settingsStore().setJSON('seed-state', { at: new Date().toISOString(), slugs: SEED_PRODUCTS.map(seedSlug) })
+    return json({ added })
   }
 
   if (path === '/admin/upload' && method === 'POST') {

@@ -148,6 +148,20 @@ assert.equal(r.data[0].name, 'Ragi Almond Biscuits')
 r = await call('DELETE', `/products/${r.data[0].id}`, { token: admin })
 assert.equal(r.status, 200, 'deleting a starter item works (static photo is left alone)')
 
+// Upgrade path: a shop seeded by the first release (11 items, no slugs recorded)
+// gets only the two new cakes on its next load, and deleted items stay deleted.
+{
+  const { getStore } = await import('@netlify/blobs')
+  const cat = getStore({ name: 'catalog', consistency: 'strong' })
+  const { blobs } = await cat.list({ prefix: 'products/' })
+  for (const b of blobs) await cat.delete(b.key)
+  await getStore({ name: 'settings', consistency: 'strong' }).setJSON('seed-state', { at: 'old' })
+  let res = await call('GET', '/products')
+  assert.deepEqual(res.data.map((p) => p.name).sort(), ['Almond Loaf Cake', 'Chocolate Marble Cake'])
+  res = await call('GET', '/products')
+  assert.equal(res.data.length, 2, 'new items are added only once')
+}
+
 await server.stop()
 fs.rmSync(dir, { recursive: true, force: true })
 console.log('All API smoke tests passed ✔')

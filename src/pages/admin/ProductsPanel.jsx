@@ -47,7 +47,7 @@ export default function ProductsPanel({ products, reload }) {
     setError(''); setMsg('')
     try {
       const r = await api('/admin/seed', { method: 'POST', as: 'admin' })
-      setMsg(r.added ? `Added ${r.added} starter item(s). Set their prices next.` : 'All starter items are already in your shop.')
+      setMsg(r.added ? `Added ${r.added} starter item(s). Set their prices next.` : 'Every starter item is already in your shop.')
       await reload()
     } catch (e) { setError(e.message) }
   }
@@ -71,6 +71,7 @@ export default function ProductsPanel({ products, reload }) {
           </p>
         </div>
         <div className="actions">
+          <button className="btn btn-ghost" onClick={loadStarter} title="Adds any starter items missing from your shop">Load starter menu</button>
           <Link to="/admin/upload" className="btn btn-ghost">Upload folder</Link>
           <button className="btn btn-primary" onClick={() => setEditing({ ...BLANK })}>Add item</button>
         </div>
