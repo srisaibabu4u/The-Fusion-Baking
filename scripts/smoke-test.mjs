@@ -50,9 +50,13 @@ r = await call('POST', '/admin/upload?name=Chocolate%20Truffle%20Cake&category=C
 assert.equal(r.status, 200)
 assert.equal(r.data.product.id, product.id)
 
-r = await call('PUT', `/products/${product.id}`, { body: { price: 48.5, description: 'Dark Belgian chocolate', tags: 'Eggless, Bestseller' }, token: admin })
-assert.equal(r.data.price, 48.5)
-assert.deepEqual(r.data.tags, ['Eggless', 'Bestseller'])
+assert.equal(product.offerClassic, true)
+assert.equal(product.diet, 'both')
+r = await call('PUT', `/products/${product.id}`, { body: { classicPrice: 650, nutritiousPrice: 720, offerNutritious: true, nutritiousNote: 'Whole wheat & jaggery', tagline: 'Dark chocolate treat', description: 'Dark Belgian chocolate', tags: 'Bestseller' }, token: admin })
+assert.equal(r.data.price, 650, 'price is the lowest offered price')
+assert.equal(r.data.nutritiousPrice, 720)
+assert.equal(r.data.tagline, 'Dark chocolate treat')
+assert.deepEqual(r.data.tags, ['Bestseller'])
 
 r = await call('GET', `/images/${r.data.image}`)
 assert.equal(r.status, 200)
@@ -70,9 +74,11 @@ r = await call('POST', '/auth/login', { body: { email: 'asha@example.com', passw
 assert.equal(r.status, 200)
 const customer = r.data.token
 
-r = await call('POST', '/orders', { body: { items: [{ id: product.id, qty: 2 }], phone: '91234567', fulfilment: 'pickup' }, token: customer })
+r = await call('POST', '/orders', { body: { items: [{ id: product.id, qty: 2, variant: 'classic', egg: 'egg' }, { id: product.id, qty: 1, variant: 'nutritious' }], phone: '9876543210', fulfilment: 'pickup' }, token: customer })
 assert.equal(r.status, 201, JSON.stringify(r.data))
-assert.equal(r.data.subtotal, 97)
+assert.equal(r.data.subtotal, 650 * 2 + 720)
+assert.equal(r.data.items[0].egg, 'egg')
+assert.equal(r.data.items[1].egg, 'eggless', 'egg choice defaults to eggless')
 const orderId = r.data.id
 
 r = await call('GET', '/orders', { token: customer })
@@ -86,8 +92,29 @@ r = await call('GET', '/admin/users', { token: admin })
 assert.equal(r.data.length, 1)
 assert.equal(r.data[0].password, undefined, 'password hash must never be returned')
 
-r = await call('PUT', '/settings', { body: { currency: 'S$' }, token: admin })
-assert.equal(r.data.currency, 'S$')
+r = await call('GET', '/settings')
+assert.equal(r.data.currency, '₹')
+r = await call('PUT', '/settings', { body: { whatsapp: '+91 98765 43210', fssai: '12345678901234' }, token: admin })
+assert.equal(r.data.whatsapp, '+919876543210')
+r = await call('POST', '/admin/logo', { body: png, token: admin, headers: { 'content-type': 'image/png' } })
+assert.ok(r.data.logo, 'logo saved')
+
+// Variant rules
+r = await call('PUT', `/products/${product.id}`, { body: { offerClassic: false, diet: 'eggless' }, token: admin })
+assert.equal(r.data.price, 720)
+r = await call('POST', '/orders', { body: { items: [{ id: product.id, qty: 1, variant: 'classic' }], phone: '9876543210' }, token: customer })
+assert.equal(r.status, 409)
+
+// Bulk enquiries
+r = await call('POST', '/enquiries', { body: { name: 'Office', phone: '9876543210', quantity: '200 muffins', occasion: 'Diwali' } })
+assert.equal(r.status, 201)
+r = await call('POST', '/enquiries', { body: { name: 'Bot', phone: '1', quantity: 'x', website: 'spam.example' } })
+r = await call('GET', '/enquiries')
+assert.equal(r.status, 401)
+r = await call('GET', '/enquiries', { token: admin })
+assert.equal(r.data.length, 1, 'honeypot submissions are dropped')
+r = await call('PATCH', `/enquiries/${r.data[0].id}`, { body: { status: 'contacted' }, token: admin })
+assert.equal(r.data.status, 'contacted')
 
 r = await call('PUT', `/products/${product.id}`, { body: { hidden: true }, token: admin })
 r = await call('GET', '/products')

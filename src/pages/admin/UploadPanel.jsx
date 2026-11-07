@@ -51,8 +51,10 @@ export default function UploadPanel({ reload }) {
         method: 'POST', raw: blob, as: 'admin', headers: { 'content-type': blob.type || d.file.type || 'image/jpeg' },
       })
       const patch = {}
-      if (Number(d.price) > 0) patch.price = Number(d.price)
-      for (const k of ['description', 'size', 'ingredients', 'tags']) if (d[k]) patch[k] = d[k]
+      if (Number(d.classicPrice) > 0) patch.classicPrice = Number(d.classicPrice)
+      if (Number(d.nutritiousPrice) > 0) { patch.nutritiousPrice = Number(d.nutritiousPrice); patch.offerNutritious = true }
+      if (r.created || d.dietGiven) patch.diet = d.diet
+      for (const k of ['description', 'size', 'ingredients', 'tags', 'tagline', 'nutritiousNote']) if (d[k]) patch[k] = d[k]
       if (d.featured) patch.featured = true
       if (Object.keys(patch).length) await api(`/products/${r.product.id}`, { method: 'PUT', body: patch, as: 'admin' })
       setStatus((s) => ({ ...s, [d.key]: r.created ? 'done' : 'updated' }))
@@ -107,8 +109,8 @@ export default function UploadPanel({ reload }) {
           <ul>
             <li>Put photos in sub-folders named by category, e.g. <code>Cakes/</code>, <code>Cookies/</code>, <code>Breads/</code>. Without sub-folders, the category is guessed from the file name.</li>
             <li>The file name becomes the item name: <code>red-velvet-cake.jpg</code> becomes “Red Velvet Cake”.</li>
-            <li>Add a price after two underscores: <code>red-velvet-cake__45.jpg</code>.</li>
-            <li>Optional: include a <code>details.csv</code> with columns <code>file, name, category, price, description, size, ingredients, tags, featured</code>.</li>
+            <li>Add prices after two underscores: <code>ragi-walnut-biscuits__350.jpg</code> sets the Classic price; <code>ragi-walnut-biscuits__350__420.jpg</code> also sets the Nutritious price.</li>
+            <li>Optional: include a <code>details.csv</code> with columns <code>file, name, category, classic_price, nutritious_price, nutritious_note, diet, tagline, description, size, ingredients, tags, featured</code>. For <code>diet</code> use eggless, egg or both.</li>
             <li>Uploading a photo with the same item name again replaces that item’s photo and keeps your edits.</li>
           </ul>
         </details>
@@ -138,7 +140,15 @@ export default function UploadPanel({ reload }) {
                   <input value={d.name} onChange={(e) => edit(d.key, 'name', e.target.value)} aria-label="Item name" disabled={running || ok} />
                   <div className="draft-row">
                     <input list="cat-list" value={d.category} onChange={(e) => edit(d.key, 'category', e.target.value)} aria-label="Category" disabled={running || ok} />
-                    <input type="number" min="0" step="0.01" value={d.price || ''} placeholder="Price" onChange={(e) => edit(d.key, 'price', e.target.value)} aria-label="Price" disabled={running || ok} />
+                    <select value={d.diet} onChange={(e) => { edit(d.key, 'diet', e.target.value); edit(d.key, 'dietGiven', true) }} aria-label="Eggless or egg" disabled={running || ok}>
+                      <option value="both">Both</option>
+                      <option value="eggless">Eggless</option>
+                      <option value="egg">With egg</option>
+                    </select>
+                  </div>
+                  <div className="draft-row">
+                    <input type="number" min="0" step="1" value={d.classicPrice || ''} placeholder="Classic ₹" onChange={(e) => edit(d.key, 'classicPrice', e.target.value)} aria-label="Classic price" disabled={running || ok} />
+                    <input type="number" min="0" step="1" value={d.nutritiousPrice || ''} placeholder="Nutritious ₹" onChange={(e) => edit(d.key, 'nutritiousPrice', e.target.value)} aria-label="Nutritious price" disabled={running || ok} />
                   </div>
                   <div className="draft-status">
                     {st === 'uploading' && <span>Uploading…</span>}

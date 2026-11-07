@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { useShop } from '../lib/store.jsx'
-import { api, formatPrice } from '../lib/api.js'
-import { Field, Notice, PasswordField } from '../components/ui.jsx'
+import { EGG_LABEL, VARIANT_LABEL, api, money, whatsappLink } from '../lib/api.js'
+import { Field, Notice, PasswordField, WhatsAppIcon } from '../components/ui.jsx'
 
 const nextPath = (params) => {
   const n = params.get('next') || '/account'
@@ -33,7 +33,7 @@ export function Login() {
   return (
     <section className="section auth">
       <form className="panel auth-panel" onSubmit={submit}>
-        <h1 className="display-sm">Sign in</h1>
+        <h1 className="script-head">Sign in</h1>
         <Field label="Email" id="l-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
         <PasswordField id="l-pass" value={password} onChange={setPassword} />
         <Notice>{error}</Notice>
@@ -69,7 +69,7 @@ export function Register() {
   return (
     <section className="section auth">
       <form className="panel auth-panel" onSubmit={submit}>
-        <h1 className="display-sm">Create an account</h1>
+        <h1 className="script-head">Create an account</h1>
         <Field label="Full name" id="r-name" value={form.name} onChange={set('name')} required autoComplete="name" />
         <Field label="Email" id="r-email" type="email" value={form.email} onChange={set('email')} required autoComplete="email" />
         <Field label="Phone (optional)" id="r-phone" type="tel" value={form.phone} onChange={set('phone')} autoComplete="tel" />
@@ -104,10 +104,23 @@ export function Account() {
   return (
     <section className="section narrow">
       <div className="account-head">
-        <h1 className="display-sm">Hello, {customer.name.split(' ')[0]}</h1>
+        <h1 className="script-head">Hello, {customer.name.split(' ')[0]}</h1>
         <button className="btn btn-ghost" onClick={signOut}>Sign out</button>
       </div>
-      {placed && <p className="notice notice-success">Order {placed} is placed. We’ll contact you shortly to confirm.</p>}
+      {placed && (() => {
+        const o = orders?.find((x) => x.id === placed)
+        const cur = settings?.currency || '₹'
+        const text = o
+          ? `Hi, I just placed order ${o.id}:\n${o.items.map((i) => `${i.qty} × ${i.name} (${VARIANT_LABEL[i.variant] || 'Classic'}, ${EGG_LABEL[i.egg] || ''})`).join('\n')}\nTotal ${money(o.subtotal, cur)}${o.date ? `\nFor ${o.date}` : ''}`
+          : `Hi, I just placed order ${placed}.`
+        const wa = whatsappLink(settings?.whatsapp, text)
+        return (
+          <div className="notice notice-success placed">
+            <p>Order {placed} is placed. We’ll confirm it with you shortly.</p>
+            {wa && <a className="btn btn-primary" href={wa} target="_blank" rel="noreferrer"><WhatsAppIcon /> Send order on WhatsApp</a>}
+          </div>
+        )
+      })()}
       <h2>Your orders</h2>
       <Notice>{error}</Notice>
       {orders === null ? (
@@ -125,8 +138,8 @@ export function Account() {
               <p className="muted small">
                 Placed {new Date(o.createdAt).toLocaleDateString()}. {o.fulfilment === 'delivery' ? 'Delivery' : 'Collection'}{o.date ? ` on ${o.date}` : ''}.
               </p>
-              <ul>{o.items.map((i) => <li key={i.id}>{i.qty} × {i.name}</li>)}</ul>
-              <p className="right"><strong>{formatPrice(o.subtotal, settings?.currency)}</strong></p>
+              <ul>{o.items.map((i, n) => <li key={n}>{i.qty} × {i.name} <span className="muted">({VARIANT_LABEL[i.variant] || 'Classic'}{i.egg ? `, ${EGG_LABEL[i.egg].toLowerCase()}` : ''})</span></li>)}</ul>
+              <p className="right"><strong>{money(o.subtotal, settings?.currency || '₹')}</strong></p>
             </li>
           ))}
         </ul>

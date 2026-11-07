@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { api, tokens } from '../../lib/api.js'
+import { api, imageUrl, tokens } from '../../lib/api.js'
 import { Notice, PasswordField } from '../../components/ui.jsx'
 import { useShop } from '../../lib/store.jsx'
 
@@ -24,7 +24,7 @@ export default function AdminLogin() {
   return (
     <div className="admin-login">
       <form className="admin-login-card" onSubmit={submit}>
-        <div className="arch-mark" aria-hidden="true"><span>F</span></div>
+        {settings?.logo && <img className="admin-login-logo" src={imageUrl(settings.logo)} alt="" />}
         <h1>{settings?.shopName || 'The Fusion Baking'}</h1>
         <p className="muted">Admin sign in</p>
         <PasswordField id="admin-pass" label="Admin password" value={password} onChange={setPassword} autoFocus />

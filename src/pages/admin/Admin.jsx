@@ -41,7 +41,7 @@ export default function Admin() {
         <nav aria-label="Admin">
           <NavLink end to="/admin">Products</NavLink>
           <NavLink to="/admin/upload">Upload folder</NavLink>
-          <NavLink to="/admin/orders">Orders</NavLink>
+          <NavLink to="/admin/orders">Orders &amp; enquiries</NavLink>
           <NavLink to="/admin/customers">Customers</NavLink>
           <NavLink to="/admin/settings">Shop settings</NavLink>
         </nav>

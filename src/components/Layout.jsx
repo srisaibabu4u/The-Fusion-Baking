@@ -1,6 +1,18 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useShop } from '../lib/store.jsx'
+import { imageUrl, whatsappLink } from '../lib/api.js'
+import { Signature, WhatsAppIcon } from './ui.jsx'
+
+export function Wordmark({ settings }) {
+  const name = settings?.shopName || 'The Fusion Baking'
+  return (
+    <Link to="/" className="wordmark" aria-label={`${name} home`}>
+      {settings?.logo && <img src={imageUrl(settings.logo)} alt="" className="wordmark-logo" />}
+      <span className="wordmark-name">{name}</span>
+    </Link>
+  )
+}
 
 export default function Layout() {
   const { settings, cartCount, customer, categories } = useShop()
@@ -10,10 +22,7 @@ export default function Layout() {
   useEffect(() => { setOpen(false); window.scrollTo(0, 0) }, [pathname])
 
   const name = settings?.shopName || 'The Fusion Baking'
-  // Show the full name on one line; a leading "The" is set in gilt italic.
-  const m = name.match(/^(the)\s+(.+)$/i)
-  const lead = m ? m[1] : ''
-  const main = m ? m[2] : name
+  const wa = whatsappLink(settings?.whatsapp, `Hi ${name}, I'd like to place an order.`)
 
   return (
     <div className="site">
@@ -21,15 +30,13 @@ export default function Layout() {
       <header className="masthead">
         <div className="masthead-inner">
           <nav className="nav nav-left" aria-label="Shop">
-            <NavLink to="/shop">Shop all</NavLink>
+            <NavLink to="/shop">Shop</NavLink>
             {categories.slice(0, 3).map((c) => (
               <NavLink key={c} to={`/shop/${encodeURIComponent(c)}`} className="hide-md">{c}</NavLink>
             ))}
+            <NavLink to="/bulk-orders" className="hide-md">Bulk orders</NavLink>
           </nav>
-          <Link to="/" className="wordmark" aria-label={`${name} home`}>
-            {lead && <span className="wordmark-lead">{lead} </span>}
-            <span className="wordmark-main">{main}</span>
-          </Link>
+          <Wordmark settings={settings} />
           <nav className="nav nav-right" aria-label="Account">
             <NavLink to={customer ? '/account' : '/account/login'} className="hide-sm">
               {customer ? customer.name.split(' ')[0] : 'Sign in'}
@@ -37,15 +44,14 @@ export default function Layout() {
             <NavLink to="/cart" className="basket-link">
               Basket{cartCount > 0 && <span className="basket-count" aria-label={`${cartCount} items`}>{cartCount}</span>}
             </NavLink>
-            <button className="menu-btn" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-controls="mobile-menu">
-              Menu
-            </button>
+            <button className="menu-btn" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-controls="mobile-menu">Menu</button>
           </nav>
         </div>
         {open && (
           <nav id="mobile-menu" className="mobile-menu" aria-label="Menu">
             <NavLink to="/shop">Shop all</NavLink>
             {categories.map((c) => <NavLink key={c} to={`/shop/${encodeURIComponent(c)}`}>{c}</NavLink>)}
+            <NavLink to="/bulk-orders">Bulk &amp; party orders</NavLink>
             <NavLink to={customer ? '/account' : '/account/login'}>{customer ? 'My account' : 'Sign in'}</NavLink>
           </nav>
         )}
@@ -54,25 +60,36 @@ export default function Layout() {
       <main id="main"><Outlet /></main>
 
       <footer className="footer">
+        <Signature />
         <div className="footer-inner">
           <div>
-            <p className="footer-name">{name}</p>
             <p>{settings?.tagline}</p>
+            {settings?.instagram && (
+              <p><a href={settings.instagram} target="_blank" rel="noreferrer">Instagram @{settings.instagram.replace(/\/+$/, '').split('/').pop().split('?')[0]}</a></p>
+            )}
           </div>
           <div>
-            <p className="footer-head">Visit</p>
-            {settings?.address && <p>{settings.address}</p>}
+            <p className="footer-head">Ordering</p>
             {settings?.hours && <p>{settings.hours}</p>}
+            {settings?.address && <p>{settings.address}</p>}
           </div>
           <div>
             <p className="footer-head">Contact</p>
+            {wa && <p><a href={wa} target="_blank" rel="noreferrer">WhatsApp</a></p>}
             {settings?.phone && <p><a href={`tel:${settings.phone}`}>{settings.phone}</a></p>}
             {settings?.email && <p><a href={`mailto:${settings.email}`}>{settings.email}</a></p>}
-            {settings?.instagram && <p><a href={settings.instagram} target="_blank" rel="noreferrer">Instagram</a></p>}
           </div>
         </div>
-        <p className="footer-fine">© {new Date().getFullYear()} {name}. <Link to="/admin/login">Staff sign in</Link></p>
+        <p className="footer-fine">
+          © {new Date().getFullYear()} {name}.{settings?.fssai && <> FSSAI Lic. No. {settings.fssai}.</>} <Link to="/admin/login">Staff sign in</Link>
+        </p>
       </footer>
+
+      {wa && (
+        <a className="wa-float" href={wa} target="_blank" rel="noreferrer">
+          <WhatsAppIcon size={20} /><span>Order on WhatsApp</span>
+        </a>
+      )}
     </div>
   )
 }

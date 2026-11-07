@@ -15,7 +15,7 @@ setEnvironmentContext({ edgeURL: 'http://localhost:8971', uncachedEdgeURL: 'http
 process.env.ADMIN_PASSWORD ||= 'admin12345'
 const { default: api } = await import('../netlify/functions/api.mjs')
 
-const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png' }
+const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.woff2': 'font/woff2', '.woff': 'font/woff' }
 
 http.createServer(async (req, res) => {
   if (req.url.startsWith('/api/')) {

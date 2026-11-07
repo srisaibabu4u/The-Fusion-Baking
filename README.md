@@ -1,8 +1,9 @@
 # The Fusion Baking
 
-An online shop for a bakery selling cakes, cookies, muffins, brownies, breads and pastries. It has a customer storefront, customer accounts, ordering, and an admin area where **you upload a folder of photos and every photo becomes a product** that you can then edit.
+An online shop for a home bakery selling cakes, cookies, biscuits, muffins, brownies and breads, built for India. It has a customer storefront, customer accounts, ordering, bulk and party enquiries, and an admin area where **you upload a folder of photos and every photo becomes a product** that you can then edit.
 
-- **Frontend:** React and Vite in a "salon pâtisserie" theme: pistachio, salon green and gilt, Bodoni Moda type, arched shop-window frames.
+- **Frontend:** React and Vite, styled after the @thefusionbaking Instagram posters: linen background, cocoa text, caramel-gold capitals, kraft-paper label strip, and taped polaroid photo frames. Fonts are Mrs Saint Delafield (script), Cinzel (taglines) and Jost (body), all self-hosted.
+- **Every item:** Classic and/or Nutritious versions with separate prices, and green/red marks for eggless or with egg. "Both" lets the customer choose at the same price.
 - **Backend:** one Netlify Function (`netlify/functions/api.mjs`).
 - **Storage:** [Netlify Blobs](https://docs.netlify.com/blobs/overview/) holds products, photos, customers, orders and settings. You don't need a separate database.
 - **CI/CD:** Netlify Git deploys from `netlify.toml`, plus a GitHub Actions workflow that builds every push and PR. The workflow can also deploy, but that's optional.
@@ -31,30 +32,55 @@ How the folder is read:
 |---|---|
 | `Bakery/Cakes/red-velvet-cake.jpg` | Item "Red Velvet Cake" in **Cakes** (the sub-folder name is the category) |
 | `Bakery/red-velvet-cake.jpg` (no sub-folder) | Category guessed from the name (cake, cookie, muffin, brownie, bread, croissant…) |
-| `red-velvet-cake__52.jpg` | Price set to 52 |
+| `ragi-walnut-biscuits__340.jpg` | Classic price ₹340 |
+| `ragi-walnut-biscuits__340__380.jpg` | Classic ₹340 and Nutritious ₹380 |
 | `details.csv` in the folder | Extra details per photo (see below) |
 | Uploading a photo whose item name already exists | Replaces that item's photo and keeps your edits |
 
 Optional `details.csv` columns (only `file` or `name` is required):
 
 ```csv
-file,name,category,price,description,size,ingredients,tags,featured
-red-velvet-cake__52.jpg,,,,"Cream cheese frosting on a tender cocoa crumb.",1 kg,,"Bestseller, Eggless",yes
+file,name,category,classic_price,nutritious_price,nutritious_note,diet,tagline,description,size,ingredients,tags,featured
+belgium-dark-chocolate-cake.jpg,,Cakes,850,950,Whole wheat & jaggery,both,Dark chocolate treat,"Layers of rich Belgian dark chocolate.",500 g,,Bestseller,yes
 ```
+
+`diet` is `eggless` (green mark), `egg` (red mark) or `both` (the customer chooses). It defaults to `both`.
 
 ### Edit items
 
-On **Products**, click any item to edit its name, category (or create a new one), price, description, size, ingredients and allergens, and labels such as *Eggless* or *Bestseller*. You can also replace its photo and set whether it's in stock, shown on the home page, or hidden. Use the checkboxes for bulk actions: move to a category, mark sold out, hide or show, delete.
+On **Products**, click any item to edit:
+
+- name, category (or create a new one) and gold tagline
+- Classic and Nutritious versions: switch each on or off, set its price, and say what makes the Nutritious version nutritious
+- eggless, with egg, or the customer's choice
+- description, size, ingredients and allergens, and labels
+- photo, and whether it's in stock, shown on the home page, or hidden
+
+Use the checkboxes for bulk actions: move to a category, set the egg mark, mark sold out, hide or show, delete.
 
 ### Orders, customers and settings
 
-- **Orders:** see every order with the customer's contact details, collection or delivery, date and notes, and change its status (New, Confirmed, Baking, Ready, Completed, Cancelled). Customers see that status on their account page.
+- **Orders & enquiries:**
+  - **Shop orders** show each item's version (Classic or Nutritious) and egg choice. There's a one-tap "Confirm on WhatsApp" message, and you set each order's status, which customers see on their account page.
+  - **Bulk enquiries** come from the "Bulk & party orders" form.
 - **Customers:** everyone who has registered.
-- **Shop settings:** shop name, home page headline and text, currency symbol (`$`, `S$`, `₹`…), phone, email, address, opening hours, ordering note and Instagram link.
+- **Shop settings:**
+  - Logo upload (a transparent PNG works best)
+  - Home page tagline, headline and text
+  - WhatsApp number. Setting it turns on the floating "Order on WhatsApp" button and WhatsApp links.
+  - Phone, email, address and order hours
+  - FSSAI licence number, shown in the footer
+  - Currency (default `₹`, with Indian digit grouping) and Instagram link
 
 ## Customers
 
-Customers register with a name, email and password (at least 8 characters, with an eye toggle) and sign in to check out. At checkout they choose collection or delivery, a date, and add notes. There's no online payment: orders are confirmed by phone or email and paid on collection or delivery. A payment gateway such as Stripe can be added later.
+Customers register with a name, email and password (at least 8 characters, with an eye toggle) and sign in to check out.
+
+1. On each item they pick Classic or Nutritious, and eggless or with egg when both are offered.
+2. At checkout they choose delivery (address and PIN code) or collection, a date from tomorrow onwards, and add notes.
+3. After ordering they can send the order to you on WhatsApp in one tap.
+
+There's no online payment yet: orders are confirmed on WhatsApp or by phone and paid on delivery. UPI through Razorpay can be added later.
 
 ## Local development
 

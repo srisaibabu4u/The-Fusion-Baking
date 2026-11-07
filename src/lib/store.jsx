@@ -4,9 +4,11 @@ import { api, storage, tokens } from './api.js'
 const ShopContext = createContext(null)
 export const useShop = () => useContext(ShopContext)
 
-export const CATEGORY_ORDER = ['Cakes', 'Cookies', 'Muffins', 'Brownies', 'Breads', 'Pastries']
+export const CATEGORY_ORDER = ['Cakes', 'Cookies', 'Biscuits', 'Muffins', 'Brownies', 'Breads', 'Pastries']
 
-const CART_KEY = 'fb.cart'
+const CART_KEY = 'fb.cart.v2'
+
+export const lineKey = (id, variant = 'classic', egg = '') => `${id}|${variant}|${egg}`
 
 export function ShopProvider({ children }) {
   const [settings, setSettings] = useState(null)
@@ -26,7 +28,7 @@ export function ShopProvider({ children }) {
       setLoadError('')
     } catch (e) {
       setLoadError(e.message)
-      setSettings((s) => s || { shopName: 'The Fusion Baking', currency: '$' })
+      setSettings((s) => s || { shopName: 'The Fusion Baking', currency: '₹' })
     } finally {
       setLoading(false)
     }
@@ -49,22 +51,21 @@ export function ShopProvider({ children }) {
   }, [products])
 
   const cartApi = useMemo(() => ({
-    add(product, qty = 1) {
+    add(product, qty = 1, variant = 'classic', egg = '') {
+      const key = lineKey(product.id, variant, egg)
       setCart((c) => {
-        const found = c.find((i) => i.id === product.id)
-        if (found) return c.map((i) => (i.id === product.id ? { ...i, qty: Math.min(50, i.qty + qty) } : i))
-        return [...c, { id: product.id, name: product.name, price: product.price, image: product.image, qty }]
+        if (c.some((i) => i.key === key)) return c.map((i) => (i.key === key ? { ...i, qty: Math.min(50, i.qty + qty) } : i))
+        return [...c, { key, id: product.id, name: product.name, image: product.image, variant, egg, qty }]
       })
     },
-    setQty(id, qty) {
-      setCart((c) => (qty <= 0 ? c.filter((i) => i.id !== id) : c.map((i) => (i.id === id ? { ...i, qty: Math.min(50, qty) } : i))))
+    setQty(key, qty) {
+      setCart((c) => (qty <= 0 ? c.filter((i) => i.key !== key) : c.map((i) => (i.key === key ? { ...i, qty: Math.min(50, qty) } : i))))
     },
-    remove(id) { setCart((c) => c.filter((i) => i.id !== id)) },
+    remove(key) { setCart((c) => c.filter((i) => i.key !== key)) },
     clear() { setCart([]) },
   }), [])
 
   const cartCount = cart.reduce((s, i) => s + i.qty, 0)
-  const cartTotal = cart.reduce((s, i) => s + (i.price || 0) * i.qty, 0)
 
   const signIn = (token, user) => { tokens.setCustomer(token); setCustomer(user) }
   const signOut = () => { tokens.setCustomer(null); setCustomer(null) }
@@ -72,7 +73,7 @@ export function ShopProvider({ children }) {
   const value = {
     settings, setSettings, products, setProducts, categories, loading, loadError, refresh,
     customer, signIn, signOut,
-    cart, cartCount, cartTotal, ...cartApi,
+    cart, cartCount, ...cartApi,
   }
   return <ShopContext.Provider value={value}>{children}</ShopContext.Provider>
 }

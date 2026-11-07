@@ -44,7 +44,34 @@ export async function api(path, { method = 'GET', body, as = 'customer', raw, he
 
 export const imageUrl = (key) => (key ? `/api/images/${key}` : null)
 
-export function formatPrice(value, currency = '$') {
+// ₹ uses Indian digit grouping (₹1,25,000); other currencies use 2 decimals.
+export function money(value, currency = '₹') {
+  const n = Number(value) || 0
+  if (currency.includes('₹')) {
+    return `${currency}${n.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`
+  }
+  return `${currency}${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
+
+export function formatPrice(value, currency = '₹') {
   if (!value) return 'Price on request'
-  return `${currency}${Number(value).toFixed(2)}`
+  return money(value, currency)
+}
+
+export const VARIANT_LABEL = { classic: 'Classic', nutritious: 'Nutritious' }
+export const EGG_LABEL = { eggless: 'Eggless', egg: 'With egg' }
+
+export function offeredVariants(p) {
+  const v = []
+  if (p.offerClassic !== false) v.push('classic')
+  if (p.offerNutritious) v.push('nutritious')
+  return v.length ? v : ['classic']
+}
+
+export const variantPrice = (p, variant) => (variant === 'nutritious' ? p.nutritiousPrice : p.classicPrice ?? p.price) || 0
+
+export function whatsappLink(number, text) {
+  const digits = String(number || '').replace(/\D/g, '')
+  if (!digits) return null
+  return `https://wa.me/${digits}${text ? `?text=${encodeURIComponent(text)}` : ''}`
 }

@@ -2,7 +2,7 @@
 //
 // Folder conventions (all optional):
 //   MyBakery/Cakes/chocolate-truffle-cake.jpg      → name "Chocolate Truffle Cake", category "Cakes"
-//   MyBakery/red-velvet-cupcake__4.50.jpg           → price 4.50, category guessed from the name
+//   MyBakery/ragi-walnut-biscuits__350__420.jpg     → Classic ₹350, Nutritious ₹420, category guessed
 //   MyBakery/details.csv                            → extra details per image (see README)
 
 const IMAGE_RE = /\.(jpe?g|png|webp|gif|avif)$/i
@@ -10,7 +10,8 @@ const IMAGE_RE = /\.(jpe?g|png|webp|gif|avif)$/i
 const CATEGORY_WORDS = [
   ['Cakes', /\b(cakes?|gateau|cheesecake|tiramisu)\b/i],
   ['Muffins', /\b(muffins?|cupcakes?)\b/i],
-  ['Cookies', /\b(cookies?|biscuits?|macarons?|shortbread)\b/i],
+  ['Cookies', /\b(cookies?|macarons?|shortbread)\b/i],
+  ['Biscuits', /\b(biscuits?|biscotti|cookies? biscuits?)\b/i],
   ['Brownies', /\b(brownies?|blondies?)\b/i],
   ['Breads', /\b(breads?|loaf|loaves|sourdough|baguette|buns?|focaccia|brioche|rolls?)\b/i],
   ['Pastries', /\b(pastry|pastries|croissants?|tarts?|danish|eclairs?|puffs?)\b/i],
@@ -31,12 +32,20 @@ export function guessCategory(name) {
   return 'Uncategorised'
 }
 
+// "name__350" → Classic ₹350; "name__350__420" → Classic ₹350 and Nutritious ₹420
 export function parseFileName(fileName) {
   const base = fileName.replace(/\.[^.]+$/, '')
-  const m = base.match(/^(.*?)(?:__|\s+-\s+|_\$|\s\$)(\d+(?:\.\d{1,2})?)$/)
+  const m = base.match(/^(.*?)__(\d+(?:\.\d{1,2})?)(?:__(\d+(?:\.\d{1,2})?))?$/)
   const rawName = m ? m[1] : base
-  return { name: titleCase(rawName.replace(/^\d+[\s._-]+/, '')) || titleCase(rawName), price: m ? Number(m[2]) : 0 }
+  return {
+    name: titleCase(rawName.replace(/^\d+[\s._-]+/, '')) || titleCase(rawName),
+    classicPrice: m ? Number(m[2]) : 0,
+    nutritiousPrice: m && m[3] ? Number(m[3]) : 0,
+  }
 }
+
+const DIET_WORDS = { eggless: 'eggless', veg: 'eggless', vegetarian: 'eggless', green: 'eggless', egg: 'egg', 'with egg': 'egg', red: 'egg', both: 'both' }
+const toNum = (v) => (v === undefined || v === '' ? null : Number(String(v).replace(/[^\d.]/g, '')) || 0)
 
 // Minimal CSV parser (handles quotes, commas and newlines inside quotes)
 export function parseCsv(text) {
@@ -58,7 +67,7 @@ export function parseCsv(text) {
   if (cell || row.length) { row.push(cell); rows.push(row) }
   const [head, ...body] = rows.filter((r) => r.some((x) => x.trim()))
   if (!head) return []
-  const keys = head.map((h) => h.trim().toLowerCase())
+  const keys = head.map((h) => h.trim().toLowerCase().replace(/\s+/g, '_'))
   return body.map((r) => Object.fromEntries(keys.map((k, i) => [k, (r[i] ?? '').trim()])))
 }
 
@@ -106,6 +115,8 @@ export async function buildDrafts(fileEntries) {
     const parsed = parseFileName(file.name)
     const row = byFile.get(file.name.toLowerCase()) || byName.get(parsed.name.toLowerCase()) || {}
     const name = row.name || parsed.name
+    const classicPrice = toNum(row.classic_price ?? row.price) ?? parsed.classicPrice
+    const nutritiousPrice = toNum(row.nutritious_price) ?? parsed.nutritiousPrice
     drafts.push({
       key: path,
       file,
@@ -113,7 +124,14 @@ export async function buildDrafts(fileEntries) {
       preview: URL.createObjectURL(file),
       name,
       category: normaliseCategory(row.category) || normaliseCategory(folder) || guessCategory(name),
-      price: row.price ? Number(row.price) || 0 : parsed.price,
+      classicPrice,
+      nutritiousPrice,
+      offerClassic: row.offer_classic ? /^(y|yes|true|1)$/i.test(row.offer_classic) : true,
+      offerNutritious: nutritiousPrice > 0,
+      nutritiousNote: row.nutritious_note || '',
+      diet: DIET_WORDS[(row.diet || '').trim().toLowerCase()] || 'both',
+      dietGiven: Boolean(DIET_WORDS[(row.diet || '').trim().toLowerCase()]),
+      tagline: row.tagline || '',
       description: row.description || '',
       size: row.size || '',
       ingredients: row.ingredients || '',

@@ -23,7 +23,7 @@ export default function Shop() {
   return (
     <section className="section shop">
       <header className="page-head">
-        <h1 className="display-sm">{category || 'The whole counter'}</h1>
+        <h1 className="script-head">{category || 'All our bakes'}</h1>
       </header>
 
       <div className="shop-bar">
@@ -45,7 +45,7 @@ export default function Shop() {
       </div>
 
       {loading ? (
-        <p className="muted center">Setting out the counter…</p>
+        <p className="muted center">Setting out the bakes…</p>
       ) : list.length ? (
         <div className="product-grid">{list.map((p) => <ProductCard key={p.id} product={p} />)}</div>
       ) : (
