@@ -42,7 +42,8 @@ export async function api(path, { method = 'GET', body, as = 'customer', raw, he
   return data
 }
 
-export const imageUrl = (key) => (key ? `/api/images/${key}` : null)
+// Uploaded photos are blob keys; starter-menu photos are static paths like /seed/x.webp
+export const imageUrl = (key) => (!key ? null : key.startsWith('/') ? key : `/api/images/${key}`)
 
 // ₹ uses Indian digit grouping (₹1,25,000); other currencies use 2 decimals.
 export function money(value, currency = '₹') {

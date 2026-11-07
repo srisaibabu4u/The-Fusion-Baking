@@ -18,6 +18,10 @@ An online shop for a home bakery selling cakes, cookies, biscuits, muffins, brow
 
 **Optional: deploy from GitHub Actions instead.** Add the repo secrets `NETLIFY_AUTH_TOKEN` and `NETLIFY_SITE_ID`, and the `deploy` job in `.github/workflows/ci-cd.yml` will deploy with the Netlify CLI. If you leave those secrets out, the job skips and Netlify's own Git integration handles deploys. Use one method or the other, not both.
 
+## Starter menu
+
+The shop comes with 11 items made from The Fusion Baking's own photos (`public/seed/`, defined in `netlify/functions/lib/seed.mjs`). They load automatically the first time the site runs with an empty catalogue. All prices start at 0 ("Price on request"), so set them in **Admin → Products**. Every name, description and photo can be edited. If you clear the catalogue, the starter menu doesn't come back unless you click **Load starter menu**.
+
 ## Using the admin area
 
 Go to `/admin/login`. There's also a "Staff sign in" link in the footer. Enter `ADMIN_PASSWORD`; the eye icon shows or hides it.

@@ -7,6 +7,7 @@ import crypto from 'node:crypto'
 import {
   signToken, verifyToken, hashPassword, checkPassword, checkAdminPassword, bearer,
 } from './lib/auth.mjs'
+import { SEED_PRODUCTS } from './lib/seed.mjs'
 
 export const config = { path: '/api/*' }
 
@@ -29,7 +30,7 @@ export const DEFAULT_SETTINGS = {
   heroTitle: 'Baked fresh, just for you',
   heroTagline: 'Classic & Nutritious Bakes',
   heroText:
-    'Cakes, cookies, brownies, muffins and breads, each baked to order. Choose the classic recipe or our nutritious version made with whole wheat, ragi and almond flour.',
+    'Cookies, biscuits, brownies, cakes and muffins, each baked to order. Choose the classic recipe or our nutritious version made with whole wheat, ragi and almond flour.',
   currency: '₹',
   phone: '',
   whatsapp: '',
@@ -150,9 +151,36 @@ async function saveProduct(p) {
   return p
 }
 
+// Starter-menu photos are static files ("/seed/…"); uploaded photos are blob keys.
+const isBlobKey = (k) => Boolean(k) && !k.startsWith('/')
+const dropImage = async (k) => { if (isBlobKey(k)) await images().delete(k).catch(() => {}) }
+
 async function deleteProduct(p) {
   await catalog().delete(`products/${p.id}`)
-  if (p.image) await images().delete(p.image).catch(() => {})
+  await dropImage(p.image)
+}
+
+async function addSeedProducts() {
+  const existing = new Set((await listProducts()).map((p) => p.slug))
+  let added = 0
+  for (const [i, seed] of SEED_PRODUCTS.entries()) {
+    const p = cleanProduct(seed, { id: id(), createdAt: new Date(Date.now() - i * 60000).toISOString() })
+    if (existing.has(p.slug)) continue
+    p.image = seed.image
+    await saveProduct(p)
+    added++
+  }
+  return added
+}
+
+// First run only: an empty catalogue gets the starter menu. After that the
+// admin is in charge, so deleting everything never brings it back.
+async function seedIfFirstRun() {
+  const st = settingsStore()
+  if (await st.get('seed-state', { type: 'json' })) return
+  await st.setJSON('seed-state', { at: new Date().toISOString() })
+  const { blobs } = await catalog().list({ prefix: 'products/' })
+  if (!blobs.length) await addSeedProducts()
 }
 
 async function putImage(bytes, contentType) {
@@ -198,7 +226,7 @@ async function handleImageUpload(req, url) {
     const old = p.image
     p.image = imageKey
     await saveProduct(p)
-    if (old) await images().delete(old).catch(() => {})
+    await dropImage(old)
     return json({ product: p, created: false })
   }
 
@@ -211,7 +239,7 @@ async function handleImageUpload(req, url) {
     existing.image = imageKey
     if (q.get('category')) existing.category = str(q.get('category'), 60)
     await saveProduct(existing)
-    if (old && old !== imageKey) await images().delete(old).catch(() => {})
+    if (old !== imageKey) await dropImage(old)
     return json({ product: existing, created: false })
   }
 
@@ -376,6 +404,7 @@ async function router(req) {
   // ---- products ----
   if (seg[0] === 'products') {
     if (seg.length === 1 && method === 'GET') {
+      await seedIfFirstRun()
       const all = await listProducts()
       return json(isAdmin(req) ? all : all.filter((p) => !p.hidden))
     }
@@ -417,6 +446,12 @@ async function router(req) {
       count++
     }
     return json({ ok: true, count })
+  }
+
+  if (path === '/admin/seed' && method === 'POST') {
+    if (!isAdmin(req)) return fail(401, 'Sign in as admin.')
+    await settingsStore().setJSON('seed-state', { at: new Date().toISOString() })
+    return json({ added: await addSeedProducts() })
   }
 
   if (path === '/admin/upload' && method === 'POST') {

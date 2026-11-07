@@ -116,6 +116,7 @@ export default function Home() {
           <p className="tagline">Gifting, offices &amp; celebrations</p>
           <h2 className="script-head">Bulk &amp; party orders</h2>
           <p>Individually packed muffins, cookie jars, brownie boxes and celebration cakes for 20 to 500 people. Tell us the occasion and quantity, and we’ll send options and a quote.</p>
+          <Photo image="/seed/bulk-orders.webp" alt="Boxes of individually packed muffins ready for a bulk order" className="bulk-photo" tape caption="Packed &amp; ready to go" />
         </div>
         <BulkForm />
       </section>
@@ -132,6 +133,7 @@ export function BulkPage() {
         <h1 className="script-head">Bulk &amp; party orders</h1>
         <p>Individually packed muffins, cookie jars, brownie boxes and celebration cakes for 20 to 500 people. Every piece is freshly baked for your date, Classic or Nutritious, eggless or with egg.</p>
         <p>Tell us the occasion and quantity, and we’ll reply with options and a quote.</p>
+        <Photo image="/seed/bulk-orders.webp" alt="Boxes of individually packed muffins ready for a bulk order" className="bulk-photo" tape caption="Packed &amp; ready to go" />
       </div>
       <BulkForm />
     </section>

@@ -189,6 +189,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .bulk-section { display: grid; grid-template-columns: .9fr 1.1fr; gap: clamp(2rem, 5vw, 4rem); align-items: start; }
 .bulk-copy p:not(.tagline) { max-width: 44ch; color: var(--cocoa-soft); }
 .bulk-done { text-align: center; }
+.bulk-photo { margin-top: 2.2rem; max-width: 460px; transform: rotate(-1.5deg); }
+.bulk-photo .polaroid-img { aspect-ratio: 16 / 9; }
 
 /* ---------- shop ---------- */
 .page-head { text-align: center; margin-bottom: 1.2rem; }

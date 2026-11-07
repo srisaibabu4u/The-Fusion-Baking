@@ -19,6 +19,19 @@ process.env.ADMIN_PASSWORD = 'sugar-and-spice-123'
 process.env.JWT_SECRET = 'x'.repeat(40)
 const { default: api } = await import('../netlify/functions/api.mjs')
 
+// First run on an empty shop loads the starter menu once
+{
+  const res = await api(new Request('http://local/api/products'))
+  const first = await res.json()
+  if (first.length !== 11) throw new Error(`expected 11 starter items, got ${first.length}`)
+  for (const p of first) {
+    const del = await api(new Request(`http://local/api/products/${p.id}`, { method: 'DELETE', headers: { authorization: `Bearer ${(await (await api(new Request('http://local/api/auth/admin', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ password: process.env.ADMIN_PASSWORD }) }))).json()).token}` } }))
+    if (del.status !== 200) throw new Error('delete failed')
+  }
+  const again = await (await api(new Request('http://local/api/products'))).json()
+  if (again.length !== 0) throw new Error('starter menu must not come back after the admin clears it')
+}
+
 const call = async (method, p, { body, token: t, headers = {} } = {}) => {
   const init = { method, headers: { ...headers } }
   if (t) init.headers.authorization = `Bearer ${t}`
@@ -122,6 +135,18 @@ assert.equal(r.data.length, 0, 'hidden products are not public')
 
 r = await call('DELETE', `/products/${product.id}`, { token: admin })
 assert.equal(r.status, 200)
+
+// Starter menu: added on demand, skips names that already exist, uses static photos
+r = await call('POST', '/admin/seed', { token: admin })
+assert.equal(r.data.added, 11)
+r = await call('POST', '/admin/seed', { token: admin })
+assert.equal(r.data.added, 0, 'seeding twice adds nothing')
+r = await call('GET', '/products')
+assert.equal(r.data.length, 11)
+assert.ok(r.data.every((p) => p.image.startsWith('/seed/')))
+assert.equal(r.data[0].name, 'Ragi Almond Biscuits')
+r = await call('DELETE', `/products/${r.data[0].id}`, { token: admin })
+assert.equal(r.status, 200, 'deleting a starter item works (static photo is left alone)')
 
 await server.stop()
 fs.rmSync(dir, { recursive: true, force: true })

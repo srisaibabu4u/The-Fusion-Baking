@@ -43,6 +43,15 @@ export default function ProductsPanel({ products, reload }) {
     } catch (e) { setError(e.message) }
   }
 
+  const loadStarter = async () => {
+    setError(''); setMsg('')
+    try {
+      const r = await api('/admin/seed', { method: 'POST', as: 'admin' })
+      setMsg(r.added ? `Added ${r.added} starter item(s). Set their prices next.` : 'All starter items are already in your shop.')
+      await reload()
+    } catch (e) { setError(e.message) }
+  }
+
   const priceCell = (p) => {
     const parts = []
     if (p.offerClassic !== false) parts.push(['Classic', p.classicPrice])
@@ -56,7 +65,10 @@ export default function ProductsPanel({ products, reload }) {
       <header className="admin-head">
         <div>
           <h1>Products</h1>
-          <p className="muted">{products.length} items. Click an item to edit its details.</p>
+          <p className="muted">
+            {products.length} items. Click an item to edit its details.
+            {products.some((p) => !p.price) && <> {products.filter((p) => !p.price).length} still need a price.</>}
+          </p>
         </div>
         <div className="actions">
           <Link to="/admin/upload" className="btn btn-ghost">Upload folder</Link>
@@ -96,8 +108,11 @@ export default function ProductsPanel({ products, reload }) {
 
       {list.length === 0 ? (
         <div className="empty">
-          <p>No items yet. Upload a folder of photos and each photo becomes an item you can edit.</p>
-          <Link to="/admin/upload" className="btn btn-primary">Upload folder</Link>
+          <p>No items yet. Upload a folder of photos and each photo becomes an item you can edit, or start from the starter menu of 11 bakes.</p>
+          <div className="actions center">
+            <Link to="/admin/upload" className="btn btn-primary">Upload folder</Link>
+            <button className="btn btn-ghost" onClick={loadStarter}>Load starter menu</button>
+          </div>
         </div>
       ) : (
         <div className="table-wrap">
