@@ -67,6 +67,14 @@ Use the checkboxes for bulk actions: move to a category, set the egg mark, mark 
 - **Orders & enquiries:**
   - **Shop orders** show each item's version (Classic or Nutritious) and egg choice. There's a one-tap "Confirm on WhatsApp" message, and you set each order's status, which customers see on their account page.
   - **Bulk enquiries** come from the "Bulk & party orders" form.
+- **Visitors:**
+  - Visits today and over the last 7, 30 or 90 days, plus how many different people visited
+  - A visits-per-day chart (hover or tap a bar for the numbers; there's also a table view)
+  - Signed-in customers with their name, email, number of visits and last visit
+  - Which pages visits start on, and the latest visits with the customer's name when known
+  - One visit is one browsing session. Your own browsing while signed in as admin isn't counted, and neither are bots or WhatsApp/Instagram link previews.
+  - Days follow India time. Once a customer signs in on a browser, earlier visits from that browser also show their name.
+  - No IP addresses or other personal data are stored for guests, only a random ID kept in their browser.
 - **Customers:** everyone who has registered.
 - **Shop settings:**
   - Logo: the apron logo is built in (`public/brand/`). Upload a transparent PNG to replace it.

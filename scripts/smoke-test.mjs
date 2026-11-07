@@ -33,7 +33,7 @@ const { default: api } = await import('../netlify/functions/api.mjs')
 }
 
 const call = async (method, p, { body, token: t, headers = {} } = {}) => {
-  const init = { method, headers: { ...headers } }
+  const init = { method, headers: { 'user-agent': 'Mozilla/5.0 (test)', ...headers } }
   if (t) init.headers.authorization = `Bearer ${t}`
   if (body instanceof Uint8Array) init.body = body
   else if (body !== undefined) {
@@ -147,6 +147,27 @@ assert.ok(r.data.every((p) => p.image.startsWith('/seed/')))
 assert.equal(r.data[0].name, 'Ragi Almond Biscuits')
 r = await call('DELETE', `/products/${r.data[0].id}`, { token: admin })
 assert.equal(r.status, 200, 'deleting a starter item works (static photo is left alone)')
+
+// Visitor analytics
+r = await call('POST', '/track', { body: { type: 'visit', vid: 'abc123', path: '/' } })
+r = await call('POST', '/track', { body: { type: 'visit', vid: 'abc123', path: '/shop' } })
+r = await call('POST', '/track', { body: { type: 'visit', vid: 'def456', path: '/' }, token: customer })
+r = await call('POST', '/track', { body: { type: 'identify', vid: 'abc123' }, token: customer })
+r = await call('POST', '/track', { body: { type: 'visit', vid: 'zzz' }, headers: { 'user-agent': 'WhatsApp/2.23' } })
+assert.equal(r.data.skipped, 'bot', 'link previews are not counted')
+r = await call('POST', '/track', { body: { type: 'visit', vid: 'adm' }, token: admin })
+assert.equal(r.data.skipped, 'admin', 'admin visits are not counted')
+r = await call('GET', '/admin/analytics?days=7')
+assert.equal(r.status, 401)
+r = await call('GET', '/admin/analytics?days=7', { token: admin })
+assert.equal(r.data.today.visits, 3)
+assert.equal(r.data.today.visitors, 2)
+assert.equal(r.data.totals.signedInVisits, 3, 'visits from a browser that later signed in count as that customer')
+assert.equal(r.data.series.length, 7)
+assert.equal(r.data.customers[0].name, 'Asha')
+assert.equal(r.data.customers[0].visits, 2)
+assert.ok(r.data.recent.every((v) => v.name === 'Asha'), 'guest visits from Asha’s browser show her name')
+assert.equal(r.data.topPages[0].page, '/')
 
 // Upgrade path: a shop seeded by the first release (11 items, no slugs recorded)
 // gets only the two new cakes on its next load, and deleted items stay deleted.

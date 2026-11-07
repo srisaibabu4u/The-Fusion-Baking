@@ -18,6 +18,7 @@ const users = () => store('users')
 const orders = () => store('orders')
 const enquiries = () => store('enquiries')
 const settingsStore = () => store('settings')
+const analytics = () => store('analytics')
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 const ORDER_STATUSES = ['pending', 'confirmed', 'baking', 'ready', 'completed', 'cancelled']
@@ -225,6 +226,94 @@ async function listAll(s, prefix) {
 }
 
 const publicUser = (u) => ({ id: u.id, name: u.name, email: u.email, phone: u.phone || '', createdAt: u.createdAt })
+
+
+// ---------- visitor analytics ----------
+// Each visit (one browser session) is stored as an empty blob whose KEY carries the
+// data, so counting never needs a read-modify-write and simultaneous visits can't
+// overwrite each other:  v/<IST day>/<time>-<rand>.<visitorId>.<userId|0>.<landing page b64>
+// No IP addresses or other personal data are stored; userId only when signed in.
+const IST_OFFSET_MS = 330 * 60 * 1000
+const istDay = (ms = Date.now()) => new Date(ms + IST_OFFSET_MS).toISOString().slice(0, 10)
+const BOT_RE = /bot|crawl|spider|slurp|preview|facebookexternalhit|whatsapp|telegram|headless|lighthouse|monitor/i
+const clean = (v, max) => String(v || '').replace(/[^a-zA-Z0-9]/g, '').slice(0, max)
+
+async function recordVisitor(t, kind) {
+  // Per-customer summary for signed-in visitors (one writer per customer, so no races to worry about)
+  const key = `u/${t.sub}`
+  const prev = (await analytics().get(key, { type: 'json' })) || { visits: 0, firstVisit: new Date().toISOString() }
+  const next = { ...prev, userId: t.sub, name: t.name, email: t.email, lastVisit: new Date().toISOString() }
+  if (kind === 'visit' || kind === 'identify') next.visits = (prev.visits || 0) + 1
+  await analytics().setJSON(key, next)
+}
+
+async function track(req) {
+  const ua = req.headers.get('user-agent') || ''
+  if (!ua || BOT_RE.test(ua)) return json({ ok: true, skipped: 'bot' })
+  const body = await readJson(req)
+  const t = auth(req)
+  if (t?.role === 'admin') return json({ ok: true, skipped: 'admin' })
+  const kind = body.type === 'identify' ? 'identify' : 'visit'
+  const vid = clean(body.vid, 16) || 'anon'
+  const customer = t?.role === 'customer' ? t : null
+  const path = Buffer.from(String(body.path || '/').slice(0, 60)).toString('base64url')
+  const stamp = `${Date.now().toString(36)}-${crypto.randomBytes(3).toString('hex')}`
+  if (kind === 'visit') {
+    await analytics().set(`v/${istDay()}/${stamp}.${vid}.${customer ? clean(customer.sub, 20) : '0'}.${path}`, '')
+  } else if (customer) {
+    // Sign-in during a visit: links this browser to the customer so their visits show their name
+    await analytics().set(`i/${istDay()}/${stamp}.${vid}.${clean(customer.sub, 20)}.${path}`, '')
+  }
+  if (customer) await recordVisitor(customer, kind)
+  return json({ ok: true })
+}
+
+function parseVisitKey(key) {
+  const [, day, rest] = key.split('/')
+  const [stamp, vid, uid, path] = rest.split('.')
+  const at = parseInt(stamp.split('-')[0], 36)
+  let page = '/'
+  try { page = Buffer.from(path || '', 'base64url').toString('utf8') || '/' } catch { /* keep default */ }
+  return { day, at, vid, uid: uid === '0' ? null : uid, page }
+}
+
+async function visitReport(days) {
+  const n = Math.min(90, Math.max(1, days))
+  const dayList = Array.from({ length: n }, (_, i) => istDay(Date.now() - (n - 1 - i) * 86400000))
+  const [lists, idLists] = await Promise.all([
+    Promise.all(dayList.map((d) => analytics().list({ prefix: `v/${d}/` }))),
+    Promise.all(dayList.map((d) => analytics().list({ prefix: `i/${d}/` }))),
+  ])
+  const visits = lists.flatMap((l) => l.blobs.map((b) => parseVisitKey(b.key)))
+  const signIns = idLists.flatMap((l) => l.blobs.map((b) => parseVisitKey(b.key)))
+  // A browser that signed in belongs to that customer for the whole period
+  const browserOwner = {}
+  for (const x of [...visits, ...signIns].sort((a, b) => a.at - b.at)) if (x.uid) browserOwner[x.vid] = x.uid
+  for (const v of visits) if (!v.uid && browserOwner[v.vid]) v.uid = browserOwner[v.vid]
+  const people = (await listAll(analytics(), 'u/')).sort((a, b) => (b.lastVisit || '').localeCompare(a.lastVisit || ''))
+  const nameOf = Object.fromEntries(people.map((p) => [p.userId, p.name]))
+  const series = dayList.map((d) => {
+    const v = visits.filter((x) => x.day === d)
+    return { day: d, visits: v.length, visitors: new Set(v.map((x) => x.vid)).size }
+  })
+  const today = series[series.length - 1]
+  const pages = {}
+  for (const v of visits) pages[v.page] = (pages[v.page] || 0) + 1
+  return {
+    days: n,
+    today: { visits: today.visits, visitors: today.visitors },
+    totals: {
+      visits: visits.length,
+      visitors: new Set(visits.map((x) => x.vid)).size,
+      signedInVisits: visits.filter((x) => x.uid).length,
+    },
+    series,
+    topPages: Object.entries(pages).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([page, count]) => ({ page, count })),
+    recent: visits.sort((a, b) => b.at - a.at).slice(0, 40)
+      .map((v) => ({ at: new Date(v.at).toISOString(), page: v.page, name: v.uid ? nameOf[v.uid] || 'Customer' : null })),
+    customers: people.map(({ name, email, visits: count, firstVisit, lastVisit }) => ({ name, email, visits: count, firstVisit, lastVisit })),
+  }
+}
 
 // ---------- route handlers ----------
 
@@ -474,6 +563,13 @@ async function router(req) {
   if (path === '/admin/upload' && method === 'POST') {
     if (!isAdmin(req)) return fail(401, 'Sign in as admin.')
     return handleImageUpload(req, url)
+  }
+
+  if (path === '/track' && method === 'POST') return track(req)
+
+  if (path === '/admin/analytics' && method === 'GET') {
+    if (!isAdmin(req)) return fail(401, 'Sign in as admin.')
+    return json(await visitReport(Number(url.searchParams.get('days')) || 30))
   }
 
   if (path === '/admin/users' && method === 'GET') {

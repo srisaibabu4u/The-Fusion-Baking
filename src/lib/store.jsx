@@ -8,6 +8,34 @@ export const CATEGORY_ORDER = ['Cakes', 'Cookies', 'Biscuits', 'Muffins', 'Brown
 
 const CART_KEY = 'fb.cart.v2'
 
+// Anonymous visitor id kept in this browser, so the admin can count different people.
+function visitorId() {
+  let v = storage.get('fb.vid')
+  if (!v) {
+    const a = new Uint8Array(6)
+    try { crypto.getRandomValues(a) } catch { a.forEach((_, i) => { a[i] = Math.floor(Math.random() * 256) }) }
+    v = [...a].map((x) => x.toString(16).padStart(2, '0')).join('')
+    storage.set('fb.vid', v)
+  }
+  return v
+}
+
+// One "visit" per browser session. The shop owner's own browsing (admin pages or
+// signed in as admin) is never counted.
+function trackVisit() {
+  try {
+    if (window.location.pathname.startsWith('/admin') || tokens.admin()) return
+    if (sessionStorage.getItem('fb.session')) return
+    sessionStorage.setItem('fb.session', '1')
+  } catch { return }
+  api('/track', { method: 'POST', body: { type: 'visit', vid: visitorId(), path: window.location.pathname } }).catch(() => {})
+}
+
+function trackIdentify() {
+  if (tokens.admin()) return
+  api('/track', { method: 'POST', body: { type: 'identify', vid: visitorId() } }).catch(() => {})
+}
+
 export const lineKey = (id, variant = 'classic', egg = '') => `${id}|${variant}|${egg}`
 
 export function ShopProvider({ children }) {
@@ -35,6 +63,7 @@ export function ShopProvider({ children }) {
   }, [])
 
   useEffect(() => { refresh() }, [refresh])
+  useEffect(() => { trackVisit() }, [])
 
   useEffect(() => {
     if (!tokens.customer()) return
@@ -67,7 +96,7 @@ export function ShopProvider({ children }) {
 
   const cartCount = cart.reduce((s, i) => s + i.qty, 0)
 
-  const signIn = (token, user) => { tokens.setCustomer(token); setCustomer(user) }
+  const signIn = (token, user) => { tokens.setCustomer(token); setCustomer(user); trackIdentify() }
   const signOut = () => { tokens.setCustomer(null); setCustomer(null) }
 
   const value = {

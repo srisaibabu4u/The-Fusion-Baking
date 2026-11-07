@@ -395,6 +395,44 @@ code { background: var(--linen); padding: .05rem .35rem; border-radius: 4px; fon
 .logo-row { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; }
 .logo-preview { height: 80px; width: 80px; object-fit: contain; background: var(--white); border: 1px solid var(--kraft-light); border-radius: 8px; padding: 4px; }
 
+/* ---------- visitors ---------- */
+.stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .8rem; margin-bottom: 1rem; }
+.stat { background: var(--paper); border: 1px solid var(--kraft-light); border-radius: 10px; padding: .9rem 1rem; display: grid; gap: .15rem; }
+.stat-value { font-size: 1.9rem; font-weight: 500; line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--cocoa); }
+.stat-label { font-size: .85rem; color: var(--cocoa-soft); }
+.panel-title { font-size: 1.1rem; margin: 0 0 1rem; }
+.admin-main .panel { margin-bottom: 1rem; }
+.visitor-cols { display: grid; grid-template-columns: 1.4fr 1fr; gap: 1rem; }
+.visitor-cols .panel { margin-bottom: 0; }
+.visitor-cols + .panel { margin-top: 1rem; }
+.table-wrap.flat { border: 0; background: transparent; border-radius: 0; }
+
+.vchart { margin: 0; }
+.vchart-plot { position: relative; height: 220px; margin-left: 2.4rem; }
+.vchart-grid { position: absolute; inset: 0; pointer-events: none; }
+.vchart-tick { position: absolute; left: -2.4rem; right: 0; transform: translateY(50%); font-size: .75rem; color: var(--cocoa-soft); font-variant-numeric: tabular-nums; }
+.vchart-tick::after { content: ''; position: absolute; left: 2.4rem; right: 0; top: 50%; border-top: 1px solid var(--linen-deep); }
+.vchart-bars { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(var(--count), 1fr); align-items: end; border-bottom: 1px solid #cfc4b5; }
+.vchart-col { position: relative; height: 100%; display: flex; align-items: flex-end; justify-content: center; background: none; border: 0; padding: 0 1px; cursor: default; }
+.vchart-col:hover, .vchart-col.is-active { background: rgba(165, 102, 43, .08); }
+.vchart-col:focus-visible { outline: 2px solid var(--caramel); outline-offset: -2px; }
+.vchart-bar { display: block; width: min(24px, calc(100% - 2px)); min-height: 0; background: var(--caramel); border-radius: 4px 4px 0 0; }
+.vchart-peak { position: absolute; transform: translateY(-4px); font-size: .78rem; font-weight: 500; color: var(--cocoa); font-variant-numeric: tabular-nums; }
+.vchart-tip { position: absolute; top: -.4rem; transform: translate(-50%, -100%); background: var(--cocoa); color: var(--paper); border-radius: 6px; padding: .4rem .65rem; font-size: .82rem; display: grid; white-space: nowrap; pointer-events: none; z-index: 2; }
+.vchart-x { display: grid; grid-template-columns: repeat(var(--count), 1fr); margin: .4rem 0 0 2.4rem; font-size: .75rem; color: var(--cocoa-soft); }
+.vchart-x span { white-space: nowrap; overflow: visible; text-align: center; }
+.vchart-x span:first-child { text-align: left; }
+.vchart-x span:last-child { text-align: right; }
+.vchart-table { margin-top: 1rem; font-size: .9rem; }
+.vchart-table summary { cursor: pointer; color: var(--cocoa-soft); }
+.vchart-table table { margin-top: .5rem; }
+.bar-list { list-style: none; padding: 0; margin: 0; display: grid; gap: .6rem; }
+.bar-list li { display: grid; grid-template-columns: minmax(0, 9rem) 1fr auto; gap: .7rem; align-items: center; font-size: .92rem; }
+.bar-list-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-list-track { height: 10px; background: var(--linen); border-radius: 0 4px 4px 0; }
+.bar-list-track span { display: block; height: 100%; background: var(--caramel); border-radius: 0 4px 4px 0; }
+.bar-list-value { font-variant-numeric: tabular-nums; min-width: 2ch; text-align: right; }
+
 /* ---------- responsive ---------- */
 @media (max-width: 1100px) {
   .hide-md { display: none; }
@@ -414,6 +452,8 @@ code { background: var(--linen); padding: .05rem .35rem; border-radius: 4px; fon
   .editor-grid { grid-template-columns: 1fr; }
   .editor-photo { max-width: 220px; }
   .order-cols { grid-template-columns: 1fr; gap: .8rem; }
+  .visitor-cols { grid-template-columns: 1fr; }
+  .visitor-cols .panel + .panel { margin-top: 1rem; }
 }
 @media (max-width: 640px) {
   .hide-sm { display: none; }

@@ -6,6 +6,7 @@ import ProductsPanel from './ProductsPanel.jsx'
 import UploadPanel from './UploadPanel.jsx'
 import OrdersPanel from './OrdersPanel.jsx'
 import { CustomersPanel, SettingsPanel } from './MiscPanels.jsx'
+import VisitorsPanel from './VisitorsPanel.jsx'
 
 export default function Admin() {
   const navigate = useNavigate()
@@ -45,6 +46,7 @@ export default function Admin() {
           <NavLink end to="/admin">Products</NavLink>
           <NavLink to="/admin/upload">Upload folder</NavLink>
           <NavLink to="/admin/orders">Orders &amp; enquiries</NavLink>
+          <NavLink to="/admin/visitors">Visitors</NavLink>
           <NavLink to="/admin/customers">Customers</NavLink>
           <NavLink to="/admin/settings">Shop settings</NavLink>
         </nav>
@@ -58,6 +60,7 @@ export default function Admin() {
           <Route index element={<ProductsPanel products={products} reload={load} />} />
           <Route path="upload" element={<UploadPanel reload={load} />} />
           <Route path="orders" element={<OrdersPanel />} />
+          <Route path="visitors" element={<VisitorsPanel />} />
           <Route path="customers" element={<CustomersPanel />} />
           <Route path="settings" element={<SettingsPanel />} />
           <Route path="*" element={<Navigate to="/admin" replace />} />
