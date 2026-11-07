@@ -1,0 +1,63 @@
+name: CI / CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+  # Optional: deploy from GitHub Actions instead of Netlify's own Git integration.
+  # Add repository secrets NETLIFY_AUTH_TOKEN and NETLIFY_SITE_ID to enable.
+  # If you linked the repo in the Netlify UI, leave these secrets unset — Netlify
+  # builds and deploys on every push by itself and this job will skip.
+  deploy:
+    name: Deploy to Netlify
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Check Netlify secrets
+        id: check
+        run: |
+          if [ -z "$NETLIFY_AUTH_TOKEN" ] || [ -z "$NETLIFY_SITE_ID" ]; then
+            echo "Netlify secrets not set — skipping (Netlify Git integration handles deploys)."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.check.outputs.enabled == 'true'
+        run: npm ci
+      - name: Deploy production
+        if: steps.check.outputs.enabled == 'true' && github.event_name != 'pull_request'
+        run: npx --yes netlify-cli deploy --build --prod --message "GitHub ${{ github.sha }}"
+      - name: Deploy preview
+        if: steps.check.outputs.enabled == 'true' && github.event_name == 'pull_request'
+        run: npx --yes netlify-cli deploy --build --alias "pr-${{ github.event.number }}" --message "PR #${{ github.event.number }}"
