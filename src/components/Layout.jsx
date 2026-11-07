@@ -10,9 +10,10 @@ export default function Layout() {
   useEffect(() => { setOpen(false); window.scrollTo(0, 0) }, [pathname])
 
   const name = settings?.shopName || 'The Fusion Baking'
-  const words = name.split(' ')
-  const lead = words.length > 2 ? words.slice(0, -2).join(' ') : ''
-  const main = words.length > 2 ? words.slice(-2).join(' ') : name
+  // Show the full name on one line; a leading "The" is set in gilt italic.
+  const m = name.match(/^(the)\s+(.+)$/i)
+  const lead = m ? m[1] : ''
+  const main = m ? m[2] : name
 
   return (
     <div className="site">
@@ -26,7 +27,7 @@ export default function Layout() {
             ))}
           </nav>
           <Link to="/" className="wordmark" aria-label={`${name} home`}>
-            {lead && <span className="wordmark-lead">{lead}</span>}
+            {lead && <span className="wordmark-lead">{lead} </span>}
             <span className="wordmark-main">{main}</span>
           </Link>
           <nav className="nav nav-right" aria-label="Account">
